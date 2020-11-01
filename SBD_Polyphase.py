@@ -1,8 +1,5 @@
 import string
-import typing
-import math
 import random
-import mmap
 
 
 def generate(amount_of_records: int, max_length: int, file_path=None) -> list:
@@ -85,9 +82,7 @@ class Sorter:
                 print(f'end of serie {idx}')
             output_tape[0], output_tape[1] = output_tape[1], output_tape[0]
             fib = fib[0] + fib[1], fib[0]
-            print(fib)
-        print(idx)
-        self.dummy_runs = fib[0] - idx if idx else 0
+        self.dummy_runs = fib[1] - idx if idx else 0
         print(self.dummy_runs)
 
     def write_series(self, input_tape: int, output_tape: int):
@@ -113,7 +108,7 @@ class Sorter:
                     previous = self.buffer[0]
                     del self.buffer[0]
             else:
-                return 0
+                return length_of_serie
 
 
 generate(20, 10, 'test.txt')
