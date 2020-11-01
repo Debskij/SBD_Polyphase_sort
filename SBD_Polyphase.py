@@ -19,6 +19,12 @@ def generate(amount_of_records: int, max_length: int, file_path=None) -> list:
         return records
 
 
+def erase_files(file_path: list):
+    for file in file_path:
+        with open(file, 'r+') as f:
+            f.truncate()
+
+
 class DatabaseAccessor:
     def __init__(self, first_tape: str, second_tape: str, third_tape: str):
         self.tapes = (open(first_tape, 'r+'), open(second_tape, 'r+'), open(third_tape, 'r+'))
@@ -66,48 +72,52 @@ class Sorter:
     def initial_phase(self):
         fib = [1, 0]
         input_tape = 0
-        output_tape = [1, 2]
-        self.write_series(input_tape, output_tape[1])
+        output_tape = [2, 1]
+        last_record = [0, 0]
+        length_of_serie = self.write_series(input_tape, 1)
         idx = 0
-        try:
-            while True:
-                while idx < fib[0]:
+        while length_of_serie:
+            idx = 0
+            while idx < fib[0] and length_of_serie:
+                length_of_serie = self.write_series(input_tape, output_tape[0])
+                if length_of_serie:
                     idx += 1
-                    self.write_series(input_tape, output_tape[0])
-                    print(f'end of serie {idx}')
-                output_tape[0], output_tape[1] = output_tape[1], output_tape[0]
-                fib = fib[0]+fib[1], fib[0]
-                idx = 0
-                print(fib)
-        except IndexError as e:
-            print(idx)
-            self.dummy_runs = fib[0] - idx if idx else 0
-            print(self.dummy_runs)
+                print(f'end of serie {idx}')
+            output_tape[0], output_tape[1] = output_tape[1], output_tape[0]
+            fib = fib[0] + fib[1], fib[0]
+            print(fib)
+        print(idx)
+        self.dummy_runs = fib[0] - idx if idx else 0
+        print(self.dummy_runs)
 
     def write_series(self, input_tape: int, output_tape: int):
         previous = None
+        length_of_serie = 0
         while True:
             if len(self.buffer):
                 data.save_to_tape(output_tape, self.buffer[0])
+                print(f'value {self.buffer[0]} written to serie on tape {output_tape}')
+                length_of_serie += 1
                 previous = self.buffer[0]
                 del self.buffer[0]
             record = data.read_from_tape(input_tape)
-            print(f'previous: {previous}, actual: {record}, tape no: {output_tape}')
             if record:
                 self.buffer.append(record)
                 if previous and previous > record:
                     data.save_to_tape(output_tape, '')
-                    return True
+                    return length_of_serie
                 else:
                     data.save_to_tape(output_tape, self.buffer[0])
+                    print(f'value {self.buffer[0]} written to serie on tape {output_tape}')
+                    length_of_serie += 1
                     previous = self.buffer[0]
                     del self.buffer[0]
             else:
-                raise IndexError
+                return 0
 
 
 generate(20, 10, 'test.txt')
-
+erase_files(['tape2.txt', 'tape3.txt'])
 data = DatabaseAccessor('test.txt', 'tape2.txt', 'tape3.txt')
 sort = Sorter(10, data)
 sort.initial_phase()
