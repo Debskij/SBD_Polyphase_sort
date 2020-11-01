@@ -1,5 +1,8 @@
 import string
 import random
+from sys import maxsize
+
+DEBUG_VARIABLES = {'database_log': False, 'distribution_log': False}
 
 
 def generate(amount_of_records: int, max_length: int, file_path=None) -> list:
@@ -34,7 +37,8 @@ class DatabaseAccessor:
             self.delete_from_tape(tape_no)
             return int(record)
         except:
-            print("ERROR WHILE READING")
+            if DEBUG_VARIABLES['database_log']:
+                print("ERROR WHILE READING")
             return None
 
     def delete_from_tape(self, tape_no: int):
@@ -52,7 +56,8 @@ class DatabaseAccessor:
             self.data_base_accesses[1] += 1
             return True
         except:
-            print("ERROR WHILE SAVING")
+            if DEBUG_VARIABLES['database_log']:
+                print("ERROR WHILE SAVING")
             return False
 
     def read_write_status(self):
@@ -70,7 +75,7 @@ class Sorter:
         fib = [1, 0]
         input_tape = 0
         output_tape = [2, 1]
-        last_record = [0, 0]
+        last_record = [maxsize * 2 + 1, maxsize * 2 + 1]
         last_record[0], length_of_serie = self.write_series(input_tape, 1)
         idx = 0
         while length_of_serie:
@@ -81,15 +86,20 @@ class Sorter:
                 if length_of_serie:
                     last_record[output_tape[0]-1] = temp
                     idx += 1
-                print(f'end of serie {idx}')
+                if DEBUG_VARIABLES['distribution_log']:
+                    print(f'end of serie {idx}')
             output_tape[0], output_tape[1] = output_tape[1], output_tape[0]
             fib = fib[0] + fib[1], fib[0]
-            print(last_record)
+            if DEBUG_VARIABLES['distribution_log']:
+                print(f'last records {last_record}')
         self.dummy_runs = fib[1] - idx if idx else 0
-        print(self.dummy_runs)
+        if DEBUG_VARIABLES['distribution_log']:
+            print(f'Dummy runs count: {self.dummy_runs}')
 
     def coaelescented_series(self, input_tape: int, output_tape: int, last_value_from_previous):
         if len(self.buffer) and self.buffer[0] > last_value_from_previous:
+            if DEBUG_VARIABLES['distribution_log']:
+                print(f'FOUND COALESCENTED SERIES! PREVIOUS VALUE {last_value_from_previous}')
             return self.write_series(input_tape, output_tape)
 
     def write_series(self, input_tape: int, output_tape: int):
@@ -99,7 +109,8 @@ class Sorter:
         while True:
             if len(self.buffer):
                 data.save_to_tape(output_tape, self.buffer[0])
-                print(f'value {self.buffer[0]} written to serie on tape {output_tape}')
+                if DEBUG_VARIABLES['distribution_log']:
+                    print(f'value {self.buffer[0]} written to serie on tape {output_tape}')
                 length_of_serie += 1
                 last_assigned_value = previous
                 previous = self.buffer[0]
@@ -113,7 +124,8 @@ class Sorter:
                     return last_assigned_value, length_of_serie
                 else:
                     data.save_to_tape(output_tape, self.buffer[0])
-                    print(f'value {self.buffer[0]} written to serie on tape {output_tape}')
+                    if DEBUG_VARIABLES['distribution_log']:
+                        print(f'value {self.buffer[0]} written to serie on tape {output_tape}')
                     length_of_serie += 1
                     last_assigned_value = previous
                     previous = self.buffer[0]
