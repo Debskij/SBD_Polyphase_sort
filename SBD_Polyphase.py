@@ -71,44 +71,55 @@ class Sorter:
         input_tape = 0
         output_tape = [2, 1]
         last_record = [0, 0]
-        length_of_serie = self.write_series(input_tape, 1)
+        last_record[0], length_of_serie = self.write_series(input_tape, 1)
         idx = 0
         while length_of_serie:
             idx = 0
+            self.coaelescented_series(input_tape, output_tape[0], last_record[output_tape[0]-1])
             while idx < fib[0] and length_of_serie:
-                length_of_serie = self.write_series(input_tape, output_tape[0])
+                temp, length_of_serie = self.write_series(input_tape, output_tape[0])
                 if length_of_serie:
+                    last_record[output_tape[0]-1] = temp
                     idx += 1
                 print(f'end of serie {idx}')
             output_tape[0], output_tape[1] = output_tape[1], output_tape[0]
             fib = fib[0] + fib[1], fib[0]
+            print(last_record)
         self.dummy_runs = fib[1] - idx if idx else 0
         print(self.dummy_runs)
 
+    def coaelescented_series(self, input_tape: int, output_tape: int, last_value_from_previous):
+        if len(self.buffer) and self.buffer[0] > last_value_from_previous:
+            return self.write_series(input_tape, output_tape)
+
     def write_series(self, input_tape: int, output_tape: int):
         previous = None
+        last_assigned_value = None
         length_of_serie = 0
         while True:
             if len(self.buffer):
                 data.save_to_tape(output_tape, self.buffer[0])
                 print(f'value {self.buffer[0]} written to serie on tape {output_tape}')
                 length_of_serie += 1
+                last_assigned_value = previous
                 previous = self.buffer[0]
                 del self.buffer[0]
             record = data.read_from_tape(input_tape)
             if record:
                 self.buffer.append(record)
                 if previous and previous > record:
+                    last_assigned_value = previous
                     data.save_to_tape(output_tape, '')
-                    return length_of_serie
+                    return last_assigned_value, length_of_serie
                 else:
                     data.save_to_tape(output_tape, self.buffer[0])
                     print(f'value {self.buffer[0]} written to serie on tape {output_tape}')
                     length_of_serie += 1
+                    last_assigned_value = previous
                     previous = self.buffer[0]
                     del self.buffer[0]
             else:
-                return length_of_serie
+                return last_assigned_value, length_of_serie
 
 
 generate(20, 10, 'test.txt')
