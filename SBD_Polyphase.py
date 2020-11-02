@@ -1,10 +1,10 @@
-import string
-import random
 from sys import maxsize
 
 from DatabaseAccessor import DatabaseAccessor
 from Logger import Logger
 from Helpers import Helpers
+from FifthRecordType import FifthRecordType
+
 
 class Sorter:
     def __init__(self, database: DatabaseAccessor, log: Logger):
@@ -177,11 +177,16 @@ class Sorter:
 
 log = Logger()
 
-Helpers.erase_files(['test.txt', 'tape2.txt', 'tape3.txt'])
-# generate(30, 6, 'basic_test')
-Helpers.copy_data('basic_test', 'test.txt')
-data = DatabaseAccessor('test.txt', 'tape2.txt', 'tape3.txt', log)
-sort = Sorter(data, log)
-sort.entry_point()
-log.print_log()
-print(data.read_write_status())
+# Helpers.erase_files(['test.txt', 'tape2.txt', 'tape3.txt'])
+# # generate(30, 6, 'basic_test')
+# Helpers.copy_data('basic_test', 'test.txt')
+# data = DatabaseAccessor('test.txt', 'tape2.txt', 'tape3.txt', log)
+# sort = Sorter(data, log)
+# sort.entry_point()
+# log.print_log()
+# print(data.read_write_status())
+
+a = FifthRecordType('abc')
+b = FifthRecordType('abc')
+
+print(a==b)

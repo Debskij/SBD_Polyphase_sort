@@ -1,5 +1,6 @@
 import Logger
 
+
 class DatabaseAccessor:
     def __init__(self, first_tape: str, second_tape: str, third_tape: str, log: Logger):
         self.paths = (first_tape, second_tape, third_tape)
