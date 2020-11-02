@@ -2,7 +2,7 @@ import string
 import random
 from sys import maxsize
 
-DEBUG_VARIABLES = {'database_log': False,
+DEBUG_VARIABLES = {'database_log': True,
                    'distribution_log': False,
                    'merge_log': True}
 
@@ -36,6 +36,8 @@ class DatabaseAccessor:
     def read_from_tape(self, tape_no: int):
         try:
             record = self.tapes[tape_no].readline().strip('\n')
+            if DEBUG_VARIABLES['database_log']:
+                print(f'Read from tape {tape_no} value {record}')
             self.data_base_accesses[0] += 1
             self.delete_from_tape(tape_no)
             return int(record)
@@ -48,7 +50,6 @@ class DatabaseAccessor:
         for tape in self.tapes:
             tape.close()
         self.tapes = (open(self.paths[0], 'r+'), open(self.paths[1], 'r+'), open(self.paths[2], 'r+'))
-
 
     def delete_from_tape(self, tape_no: int):
         d = self.tapes[tape_no].readlines()
@@ -151,7 +152,7 @@ class Sorter:
     def rotate_sequence(self):
         self.tapes_sequence = self.tapes_sequence[-1:] + self.tapes_sequence[:-1]
 
-    def merge_two_tapes(self):
+    def merge_dummy_runs(self):
         previous_value = [0, 0]
         while self.dummy_runs:
             self.refill_buffer()
@@ -168,7 +169,55 @@ class Sorter:
                 print(f'Saved value {self.buffer[1]}')
             previous_value[1] = self.buffer[1]
             self.buffer[1] = None
+        return previous_value
 
+    def merge_two_tapes(self):
+        previous_values = [0, 0]
+        while None not in self.buffer:
+            self.refill_buffer()
+            if DEBUG_VARIABLES['merge_log']:
+                print(f'Buffer: {self.buffer}\nPrevious values: {previous_values}')
+            if previous_values[0] > self.buffer[0]:
+                while None not in self.buffer and previous_values[1] < self.buffer[1]:
+                    self.db.save_to_tape(self.tapes_sequence[2], self.buffer[1])
+                    previous_values[1] = self.buffer[1]
+                    self.buffer[1] = None
+                    self.refill_buffer()
+                previous_values[0] = 0
+                continue
+            elif previous_values[1] > self.buffer[1]:
+                while None not in self.buffer and previous_values[0] < self.buffer[0]:
+                    self.db.save_to_tape(self.tapes_sequence[2], self.buffer[0])
+                    previous_values[0] = self.buffer[0]
+                    self.buffer[0] = None
+                    self.refill_buffer()
+                    previous_values[1] = 0
+                continue
+            if self.buffer[0] < self.buffer[1]:
+                self.db.save_to_tape(self.tapes_sequence[2], self.buffer[0])
+                previous_values[0] = self.buffer[0]
+                self.buffer[0] = None
+                self.refill_buffer()
+            else:
+                self.db.save_to_tape(self.tapes_sequence[2], self.buffer[1])
+                previous_values[1] = self.buffer[1]
+                self.buffer[1] = None
+                self.refill_buffer()
+        self.buffer = [self.buffer[1], self.buffer[0]]
+
+    def merge_phase(self):
+        previous_values = self.merge_dummy_runs()
+        for _ in range(self.expected_number_of_merges):
+            if DEBUG_VARIABLES['merge_log']:
+                print(f'tapes sequence: {self.tapes_sequence}')
+                print(f'buffer: {self.buffer}')
+            self.merge_two_tapes()
+            self.db.flush_whole_db()
+            self.rotate_sequence()
+            self.refill_buffer()
+            if DEBUG_VARIABLES['merge_log']:
+                print(f'tapes sequence: {self.tapes_sequence}')
+                print(f'buffer: {self.buffer}')
 
     def entry_point(self):
         self.tapes_sequence = [*self.initial_distribution(), 0]
@@ -177,8 +226,7 @@ class Sorter:
         if DEBUG_VARIABLES['merge_log']:
             print(f'tapes sequence: {self.tapes_sequence}')
             print(f'expected merges amount: {self.expected_number_of_merges}')
-        self.merge_two_tapes()
-
+        self.merge_phase()
 
     def refill_buffer(self):
         self.buffer = [self.db.read_from_tape(self.tapes_sequence[0]) if not self.buffer[0] else self.buffer[0],
