@@ -141,8 +141,8 @@ class Sorter:
             log('distribution_log', f'last records {last_record}')
         self.dummy_runs = fib[1] - idx if idx else 0
         log('distribution_log', f'Output tape: {output_tape}')
-        print(f'Amount of series on tapes: {tapes_series}')
-        print(f'Dummy runs count: {self.dummy_runs}')
+        log('distribution_log', f'Amount of series on tapes: {tapes_series}')
+        log('distribution_log', f'Dummy runs count: {self.dummy_runs}')
         return [output_tape[1], output_tape[0]]  # Which tape yields dummy runs
 
     def coalescence_series(self, input_tape: int, output_tape: int, last_value_from_previous):
@@ -248,8 +248,6 @@ class Sorter:
                 previous_values[1] = self.buffer[1]
                 self.buffer[1] = None
                 self.refill_buffer()
-
-        print(which_serie)
         self.buffer = [self.buffer[1], self.buffer[0]]
 
     def merge_phase(self):
@@ -287,4 +285,3 @@ data = DatabaseAccessor('test.txt', 'tape2.txt', 'tape3.txt')
 sort = Sorter(10, data)
 sort.entry_point()
 log.print_log()
-# print(data.read_write_status())
