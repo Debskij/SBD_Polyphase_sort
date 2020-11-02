@@ -3,8 +3,8 @@ import random
 from sys import maxsize
 
 DEBUG_VARIABLES = {'database_log': False,
-                   'distribution_log': False,
-                   'merge_log': True}
+                   'distribution_log': True,
+                   'merge_log': False}
 
 
 def copy_data(path_1, path_2):
@@ -40,7 +40,7 @@ class Logger:
         self.log = []
         self.dbg_variables = {'database_log': True,
                               'distribution_log': False,
-                              'merge_log': False}
+                              'merge_log': True}
 
     def __call__(self, *args, **kwargs):
         try:
@@ -97,6 +97,7 @@ class DatabaseAccessor:
             self.tapes[tape_no].write(f'{str(value)}\n')
             self.tapes[tape_no].flush()
             self.data_base_accesses[1] += 1
+            log('database_log', f'Written value: {value} to tape {tape_no}')
             return True
         except(ValueError, IOError):
             log('database_log', "ERROR WHILE SAVING")
@@ -126,6 +127,7 @@ class Sorter:
         while length_of_serie:
             idx = 0
             self.coalescence_series(input_tape, output_tape[0], last_record[output_tape[0] - 1])
+            log('distribution_log', f'trying to put {fib[0]} series into tape {output_tape[0]}')
             while idx < fib[0] and length_of_serie:
                 temp, length_of_serie = self.initial_distribution_write_series(input_tape, output_tape[0])
                 if length_of_serie:
@@ -203,21 +205,25 @@ class Sorter:
             self.refill_buffer()
             log('merge_log', f'Buffer: {self.buffer}\nPrevious values: {previous_values}')
             if previous_values[0] > self.buffer[0]:
+                log('merge_log', f'end of serie at tape {self.tapes_sequence[0]}')
                 while None not in self.buffer and previous_values[1] < self.buffer[1]:
                     self.db.save_to_tape(self.tapes_sequence[2], self.buffer[1])
                     previous_values[1] = self.buffer[1]
                     self.buffer[1] = None
                     self.refill_buffer()
-                previous_values[0] = self.buffer[0]
+                log('merge_log', f'end of serie at tape {self.tapes_sequence[1]}\nvalues at buffer {self.buffer}')
+                previous_values = [0, 0]
                 which_serie[0] += 1
                 continue
             elif previous_values[1] > self.buffer[1]:
+                log('merge_log', f'end of serie at tape {self.tapes_sequence[1]}')
                 while None not in self.buffer and previous_values[0] < self.buffer[0]:
                     self.db.save_to_tape(self.tapes_sequence[2], self.buffer[0])
                     previous_values[0] = self.buffer[0]
                     self.buffer[0] = None
                     self.refill_buffer()
-                previous_values[1] = self.buffer[1]
+                log('merge_log', f'end of serie at tape {self.tapes_sequence[0]}\nvalues at buffer {self.buffer}')
+                previous_values = [0, 0]
                 which_serie[1] += 1
                 continue
             elif self.buffer[0] < self.buffer[1]:
@@ -235,13 +241,12 @@ class Sorter:
 
     def merge_phase(self):
         self.merge_dummy_runs()
-        for _ in range(self.expected_number_of_merges + 4):
+        for _ in range(2):
             log('merge_log', f'tapes sequence: {self.tapes_sequence}')
             log('merge_log', f'buffer: {self.buffer}')
             self.merge_two_tapes()
             self.db.flush_whole_db()
             self.rotate_sequence()
-            self.refill_buffer()
             log('merge_log', f'tapes sequence: {self.tapes_sequence}')
             log('merge_log', f'buffer tape {self.tapes_sequence[0]}: {self.buffer[0]}')
             log('merge_log', f'buffer tape {self.tapes_sequence[1]}: {self.buffer[1]}')
