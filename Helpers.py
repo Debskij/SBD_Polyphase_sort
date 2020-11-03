@@ -1,5 +1,5 @@
 import string
-from random import random
+import random
 
 
 class Helpers:
@@ -13,8 +13,8 @@ class Helpers:
 
     @staticmethod
     def generate(amount_of_records: int, max_length: int, file_path=None) -> list:
-        # chars = string.ascii_letters + string.digits
-        chars = string.digits
+        chars = string.ascii_letters + string.digits
+        # chars = string.digits
         records = [''.join((random.choice(chars) for _ in range(random.randint(1, max_length)))) for _ in
                    range(amount_of_records)]
         if file_path:

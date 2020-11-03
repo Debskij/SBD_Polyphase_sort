@@ -56,7 +56,7 @@ class Sorter:
         while True:
             if len(self.buffer):
                 self.db.save_to_tape(output_tape, self.buffer[0])
-                self.log('distribution_log', f'value {self.buffer[0]} written to serie on tape {output_tape}')
+                self.log('distribution_log', f'value {self.print_buffer()[0]} written to serie on tape {output_tape}')
                 length_of_serie += 1
                 last_assigned_value = previous
                 previous = self.buffer[0]
@@ -69,7 +69,7 @@ class Sorter:
                     return last_assigned_value, length_of_serie
                 else:
                     self.db.save_to_tape(output_tape, self.buffer[0])
-                    self.log('distribution_log', f'value {self.buffer[0]} written to serie on tape {output_tape}')
+                    self.log('distribution_log', f'value {self.print_buffer()[0]} written to serie on tape {output_tape}')
                     length_of_serie += 1
                     last_assigned_value = previous
                     previous = self.buffer[0]
@@ -84,17 +84,23 @@ class Sorter:
         previous_value = [0, 0]
         while self.dummy_runs:
             self.refill_buffer()
-            self.log('merge_log', f'buffer dummy_runs: {self.buffer}')
+            self.log('merge_log', f'buffer dummy_runs: {self.print_buffer()}')
             if previous_value[1] > self.buffer[1]:
                 self.dummy_runs -= 1
                 self.log('merge_log', f'One series ended. {self.dummy_runs} left')
                 if not self.dummy_runs:
                     break
-            self.db.save_to_tape(self.tapes_sequence[2], self.buffer[1])
-            self.log('merge_log', f'Saved value {self.buffer[1]}')
+            self.db.save_to_tape(self.tapes_sequence[2], self.print_buffer()[1])
+            self.log('merge_log', f'Saved value {self.print_buffer()[1]}')
             previous_value[1] = self.buffer[1]
             self.buffer[1] = None
-        self.log('merge_log', f'Buffer after: {self.buffer}')
+        self.log('merge_log', f'Buffer after: {self.print_buffer()}')
+
+    def print_buffer(self):
+        return [x.__call__() if type(x) == FifthRecordType else x for x in self.buffer]
+
+    def print_fifth_type(self, list_of_val: list):
+        return [x.__call__() if type(x) == FifthRecordType else x for x in list_of_val]
 
     def merge_two_tapes(self):
         previous_values = [0, 0]
@@ -102,7 +108,7 @@ class Sorter:
         self.refill_buffer()
         while None not in self.buffer:
             self.refill_buffer()
-            self.log('merge_log', f'Buffer: {self.buffer}\nPrevious values: {previous_values}')
+            self.log('merge_log', f'Buffer: {self.print_buffer()}\nPrevious values: {self.print_fifth_type(previous_values)}')
             if previous_values[0] > self.buffer[0]:
                 self.log('merge_log', f'end of serie at tape {self.tapes_sequence[0]}')
                 while self.buffer[1] and previous_values[1] < self.buffer[1]:
@@ -110,7 +116,7 @@ class Sorter:
                     previous_values[1] = self.buffer[1]
                     self.buffer[1] = None
                     self.refill_buffer()
-                self.log('merge_log', f'end of serie at tape {self.tapes_sequence[1]}\nvalues at buffer {self.buffer}')
+                self.log('merge_log', f'end of serie at tape {self.tapes_sequence[1]}\nvalues at buffer {self.print_buffer()}')
                 previous_values = [0, 0]
                 which_serie[0] += 1
                 continue
@@ -121,7 +127,7 @@ class Sorter:
                     previous_values[0] = self.buffer[0]
                     self.buffer[0] = None
                     self.refill_buffer()
-                self.log('merge_log', f'end of serie at tape {self.tapes_sequence[0]}\nvalues at buffer {self.buffer}')
+                self.log('merge_log', f'end of serie at tape {self.tapes_sequence[0]}\nvalues at buffer {self.print_buffer()}')
                 previous_values = [0, 0]
                 which_serie[1] += 1
                 continue
@@ -158,8 +164,8 @@ class Sorter:
             self.db.flush_whole_db()
             self.rotate_sequence()
             self.log('merge_log', f'tapes sequence: {self.tapes_sequence}')
-            self.log('merge_log', f'buffer tape {self.tapes_sequence[0]}: {self.buffer[0]}')
-            self.log('merge_log', f'buffer tape {self.tapes_sequence[1]}: {self.buffer[1]}')
+            self.log('merge_log', f'buffer tape {self.tapes_sequence[0]}: {self.print_buffer()[0]}')
+            self.log('merge_log', f'buffer tape {self.tapes_sequence[1]}: {self.print_buffer()[1]}')
 
     def entry_point(self):
         self.tapes_sequence = [*self.initial_distribution(), 0]
@@ -177,16 +183,11 @@ class Sorter:
 
 log = Logger()
 
-# Helpers.erase_files(['test.txt', 'tape2.txt', 'tape3.txt'])
-# # generate(30, 6, 'basic_test')
-# Helpers.copy_data('basic_test', 'test.txt')
-# data = DatabaseAccessor('test.txt', 'tape2.txt', 'tape3.txt', log)
-# sort = Sorter(data, log)
-# sort.entry_point()
-# log.print_log()
+Helpers.erase_files(['test.txt', 'tape2.txt', 'tape3.txt'])
+# Helpers.generate(30, 30, 'basic_test_fifth')
+Helpers.copy_data('basic_test_fifth', 'test.txt')
+data = DatabaseAccessor('test.txt', 'tape2.txt', 'tape3.txt', log)
+sort = Sorter(data, log)
+sort.entry_point()
+log.print_log()
 # print(data.read_write_status())
-
-a = FifthRecordType('abc')
-b = FifthRecordType('abc')
-
-print(a==b)

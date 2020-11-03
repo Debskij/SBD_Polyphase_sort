@@ -1,6 +1,12 @@
 class FifthRecordType(object):
     def __init__(self, value: str):
-        self.value = value
+        if value:
+            self.value = value
+        else:
+            raise ValueError
+
+    def __call__(self, *args, **kwargs):
+        return self.value
 
     @staticmethod
     def max(list_of_ascii: list):
@@ -13,25 +19,49 @@ class FifthRecordType(object):
         return set(self.value).difference(set(other.value)), set(other.value).difference(set(self.value))
 
     def __lt__(self, other):
-        set_this, set_other = self.form_sets(other)
-        return self.max([ord(c) for c in set_this] + 0) < self.max([ord(c) for c in set_other])
+        if type(other) == FifthRecordType:
+            set_this, set_other = self.form_sets(other)
+            return self.max([ord(c) for c in set_this]) < self.max([ord(c) for c in set_other])
+        if type(other) == int:
+            set_this = set(self.value)
+            return self.max([ord(c) for c in set_this]) < other
 
     def __le__(self, other):
-        set_this, set_other = self.form_sets(other)
-        return self.max([ord(c) for c in set_this]) <= self.max([ord(c) for c in set_other])
+        if type(other) == FifthRecordType:
+            set_this, set_other = self.form_sets(other)
+            return self.max([ord(c) for c in set_this]) <= self.max([ord(c) for c in set_other])
+        if type(other) == int:
+            set_this = set(self.value)
+            return self.max([ord(c) for c in set_this]) <= other
 
     def __eq__(self, other):
-        set_this, set_other = self.form_sets(other)
-        return self.max([ord(c) for c in set_this]) == self.max([ord(c) for c in set_other])
+        if type(other) == FifthRecordType:
+            set_this, set_other = self.form_sets(other)
+            return self.max([ord(c) for c in set_this]) == self.max([ord(c) for c in set_other])
+        if type(other) == int:
+            set_this = set(self.value)
+            return self.max([ord(c) for c in set_this]) == other
 
     def __ne__(self, other):
-        set_this, set_other = self.form_sets(other)
-        return self.max([ord(c) for c in set_this]) != self.max([ord(c) for c in set_other])
+        if type(other) == FifthRecordType:
+            set_this, set_other = self.form_sets(other)
+            return self.max([ord(c) for c in set_this]) != self.max([ord(c) for c in set_other])
+        if type(other) == int:
+            set_this = set(self.value)
+            return self.max([ord(c) for c in set_this]) != other
 
     def __gt__(self, other):
-        set_this, set_other = self.form_sets(other)
-        return self.max([ord(c) for c in set_this]) > self.max([ord(c) for c in set_other])
+        if type(other) == FifthRecordType:
+            set_this, set_other = self.form_sets(other)
+            return self.max([ord(c) for c in set_this]) > self.max([ord(c) for c in set_other])
+        if type(other) == int:
+            set_this = set(self.value)
+            return self.max([ord(c) for c in set_this]) > other
 
     def __ge__(self, other):
-        set_this, set_other = self.form_sets(other)
-        return self.max([ord(c) for c in set_this]) >= self.max([ord(c) for c in set_other])
+        if type(other) == FifthRecordType:
+            set_this, set_other = self.form_sets(other)
+            return self.max([ord(c) for c in set_this]) >= self.max([ord(c) for c in set_other])
+        if type(other) == int:
+            set_this = set(self.value)
+            return self.max([ord(c) for c in set_this]) >= other

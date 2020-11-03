@@ -1,5 +1,5 @@
 import Logger
-
+from FifthRecordType import FifthRecordType
 
 class DatabaseAccessor:
     def __init__(self, first_tape: str, second_tape: str, third_tape: str, log: Logger):
@@ -14,7 +14,7 @@ class DatabaseAccessor:
             self.log('database_log', f'Read from tape {tape_no} value {record}')
             self.data_base_accesses[0] += 1
             self.delete_from_tape(tape_no)
-            return int(record)
+            return FifthRecordType(record)
         except (ValueError, IOError):
             self.log('database_log', "ERROR WHILE READING")
             return None
@@ -34,10 +34,10 @@ class DatabaseAccessor:
 
     def save_to_tape(self, tape_no: int, value):
         try:
-            self.tapes[tape_no].write(f'{str(value)}\n')
+            self.tapes[tape_no].write(f'{str(value.value)}\n')
             self.tapes[tape_no].flush()
             self.data_base_accesses[1] += 1
-            self.log('database_log', f'Written value: {value} to tape {tape_no}')
+            self.log('database_log', f'Written value: {value.__call__()} to tape {tape_no}')
             return True
         except(ValueError, IOError):
             self.log('database_log', "ERROR WHILE SAVING")
