@@ -159,7 +159,7 @@ class Sorter:
         self.merge_dummy_runs()
         for _ in range(self.expected_number_of_merges):
             self.log('merge_log', f'tapes sequence: {self.tapes_sequence}')
-            self.log('merge_log', f'buffer: {self.buffer}')
+            self.log('merge_log', f'buffer: {self.print_buffer()}')
             self.merge_two_tapes()
             self.db.flush_whole_db()
             self.rotate_sequence()
@@ -184,7 +184,7 @@ class Sorter:
 log = Logger()
 
 Helpers.erase_files(['test.txt', 'tape2.txt', 'tape3.txt'])
-# Helpers.generate(30, 30, 'basic_test_fifth')
+Helpers.generate(60, 30, 'basic_test_fifth')
 Helpers.copy_data('basic_test_fifth', 'test.txt')
 data = DatabaseAccessor('test.txt', 'tape2.txt', 'tape3.txt', log)
 sort = Sorter(data, log)

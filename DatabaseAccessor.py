@@ -34,10 +34,10 @@ class DatabaseAccessor:
 
     def save_to_tape(self, tape_no: int, value):
         try:
-            self.tapes[tape_no].write(f'{str(value.value)}\n')
+            self.tapes[tape_no].write(f'{str(value.__call__() if type(value) == FifthRecordType else value)}\n')
             self.tapes[tape_no].flush()
             self.data_base_accesses[1] += 1
-            self.log('database_log', f'Written value: {value.__call__()} to tape {tape_no}')
+            self.log('database_log', f'Written value: {str(value.__call__() if type(value) == FifthRecordType else value)} to tape {tape_no}')
             return True
         except(ValueError, IOError):
             self.log('database_log', "ERROR WHILE SAVING")
