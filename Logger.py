@@ -1,9 +1,9 @@
 class Logger:
     def __init__(self):
         self.log = []
-        self.dbg_variables = {'database_log': True,
-                              'distribution_log': True,
-                              'merge_log': True}
+        self.dbg_variables = {'database_log': False,
+                              'distribution_log': False,
+                              'merge_log': False}
 
     def __call__(self, *args, **kwargs):
         try:

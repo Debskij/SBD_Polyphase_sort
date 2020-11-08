@@ -43,4 +43,3 @@ class FifthRecordType(object):
             return self.value >= other.value
         if type(other) == int:
             return ord(list(self.value)[0]) >= other
-

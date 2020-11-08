@@ -1,27 +1,40 @@
 import Logger
 from FifthRecordType import FifthRecordType
 
+
 class DatabaseAccessor:
-    def __init__(self, first_tape: str, second_tape: str, third_tape: str, log: Logger):
+    def __init__(self, first_tape: str, second_tape: str, third_tape: str, log: Logger, block_size: int, separator='\n'):
         self.paths = (first_tape, second_tape, third_tape)
         self.tapes = (open(first_tape, 'r+'), open(second_tape, 'r+'), open(third_tape, 'r+'))
         self.data_base_accesses = [0, 0]
+        self.block_size = block_size
+        self.tape_buffers = [''] * 3
         self.log = log
+        self.separator = separator
 
     def read_from_tape(self, tape_no: int):
-        try:
-            record = self.tapes[tape_no].readline()
-            if record == '\n':
-                self.tapes[tape_no].readline()
-            record = record.strip('\n')
-            self.log('database_log', f'Read from tape {tape_no} value {record}')
-            self.data_base_accesses[0] += 1
-            self.delete_from_tape(tape_no)
-            self.log('database_log', f'Curently read record: {record}')
-            return FifthRecordType(record)
-        except (ValueError, IOError):
-            self.log('database_log', f"ERROR WHILE READING ON TAPE {tape_no}")
-            return None
+        temp_record = ''
+        while True:
+            if not len(self.tape_buffers[tape_no]):
+                self.data_base_accesses[0] += 1
+                self.tape_buffers[tape_no] = self.tapes[tape_no].read(self.block_size)
+                self.delete_from_tape(tape_no)
+            buffer_splitted = self.tape_buffers[tape_no].split(self.separator)
+            if len(buffer_splitted) == 1 and len(buffer_splitted[0]):
+                temp_record += buffer_splitted[0]
+                self.data_base_accesses[0] += 1
+                self.tape_buffers[tape_no] = self.tapes[tape_no].read(self.block_size)
+                self.delete_from_tape(tape_no)
+                if not self.tape_buffers[tape_no]:
+                    return FifthRecordType(temp_record)
+            if len(buffer_splitted) == 1 and not len(buffer_splitted[0]):
+                return None
+            if len(buffer_splitted) > 1:
+                self.tape_buffers[tape_no] = self.separator.join(buffer_splitted[1:])
+                if len(temp_record):
+                    return FifthRecordType(str(temp_record + buffer_splitted[0]))
+                else:
+                    return FifthRecordType(buffer_splitted[0])
 
     def flush_whole_db(self):
         for tape in self.tapes:
@@ -32,16 +45,15 @@ class DatabaseAccessor:
         d = self.tapes[tape_no].readlines()
         self.tapes[tape_no].seek(0)
         self.tapes[tape_no].truncate()
-        for i in range(0, len(d)):
-            self.tapes[tape_no].write(d[i])
+        self.tapes[tape_no].writelines(d)
         self.tapes[tape_no].seek(0)
 
     def save_to_tape(self, tape_no: int, value):
         try:
-            self.tapes[tape_no].write(f'{str(value.__call__() if type(value) == FifthRecordType else value)}\n')
-            self.tapes[tape_no].flush()
+            self.tapes[tape_no].write(f'{str(value.__call__() if type(value) == FifthRecordType else value)}{self.separator}')
             self.data_base_accesses[1] += 1
-            self.log('database_log', f'Written value: {str(value.__call__() if type(value) == FifthRecordType else value)} to tape {tape_no}')
+            self.log('database_log',
+                     f'Written value: {str(value.__call__() if type(value) == FifthRecordType else value)} to tape {tape_no}')
             return True
         except(ValueError, IOError):
             self.log('database_log', "ERROR WHILE SAVING")

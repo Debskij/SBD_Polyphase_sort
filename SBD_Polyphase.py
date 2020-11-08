@@ -41,11 +41,13 @@ class Sorter:
         self.log('distribution_log', f'Output tape: {output_tape}')
         self.log('distribution_log', f'Amount of series on tapes: {tapes_series}')
         self.log('distribution_log', f'Dummy runs count: {self.dummy_runs}')
-        return output_tape[::-1] if idx else output_tape # Which tape yields dummy runs
+        return output_tape[::-1] if idx else output_tape  # Which tape yields dummy runs
 
     def coalescence_series(self, input_tape: int, output_tape: int, last_value_from_previous):
         if len(self.buffer) and self.buffer[0] > last_value_from_previous:
-            self.log('distribution_log', f'FOUND COALESCENTED SERIES! PREVIOUS VALUE {last_value_from_previous.__call__() if type(last_value_from_previous) == FifthRecordType else last_value_from_previous}')
+            self.log('distribution_log',
+                     f'FOUND COALESCENTED SERIES! PREVIOUS VALUE '
+                     f'{last_value_from_previous.__call__()}')
             return self.initial_distribution_write_series(input_tape, output_tape)
 
     def initial_distribution_write_series(self, input_tape: int, output_tape: int):
@@ -68,7 +70,8 @@ class Sorter:
                     return last_assigned_value, length_of_serie
                 else:
                     self.db.save_to_tape(output_tape, self.buffer[0])
-                    self.log('distribution_log', f'value {self.print_buffer()[0]} written to serie on tape {output_tape}')
+                    self.log('distribution_log',
+                             f'value {self.print_buffer()[0]} written to serie on tape {output_tape}')
                     length_of_serie += 1
                     last_assigned_value = previous
                     previous = self.buffer[0]
@@ -167,9 +170,9 @@ log = Logger()
 Helpers.erase_files(['tape0.txt', 'tape1.txt', 'tape2.txt'])
 Helpers.generate(100, 30, 'basic_test_fifth')
 Helpers.copy_data('basic_test_fifth', 'tape0.txt')
-data = DatabaseAccessor('tape0.txt', 'tape1.txt', 'tape2.txt', log)
+data = DatabaseAccessor('tape0.txt', 'tape1.txt', 'tape2.txt', log, 100)
 sort = Sorter(data, log)
 sort.entry_point()
 log.print_log()
 Validator.validate(['tape0.txt', 'tape1.txt', 'tape2.txt'])
-# print(data.read_write_status())
+print(data.read_write_status())
