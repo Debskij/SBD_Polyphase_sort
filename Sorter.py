@@ -168,16 +168,3 @@ class Sorter:
         self.buffer = [self.db.read_from_tape(self.tapes_sequence[0]) if not self.buffer[0] else self.buffer[0],
                        self.db.read_from_tape(self.tapes_sequence[1]) if not self.buffer[1] else self.buffer[1]]
         return None not in self.buffer
-
-
-log = Logger()
-# while Validator.validate(['tape0.txt', 'tape1.txt', 'tape2.txt']):
-Helpers.erase_files(['tape0.txt', 'tape1.txt', 'tape2.txt'])
-Helpers.generate(100, 20, 'basic_test_fifth')
-Helpers.copy_data('basic_test_fifth', 'tape0.txt')
-data = DatabaseAccessor('tape0.txt', 'tape1.txt', 'tape2.txt', log, 10)
-sort = Sorter(data, log)
-sort.entry_point()
-log.print_log()
-# Validator.validate(['tape0.txt', 'tape1.txt', 'tape2.txt'])
-# print(data.read_write_status())
