@@ -7,6 +7,10 @@ from FifthRecordType import FifthRecordType
 from Validator import Validator
 
 
+def print_fifth_type(list_of_val: list):
+    return [x.__call__() if type(x) == FifthRecordType else x for x in list_of_val]
+
+
 class Sorter:
     def __init__(self, database: DatabaseAccessor, log: Logger):
         self.buffer = list()
@@ -36,7 +40,7 @@ class Sorter:
                 self.log('distribution_log', f'end of serie {idx}')
             output_tape[0], output_tape[1] = output_tape[1], output_tape[0]
             fib = fib[0] + fib[1], fib[0]
-            self.log('distribution_log', f'last records {self.print_fifth_type(last_record)}')
+            self.log('distribution_log', f'last records {print_fifth_type(last_record)}')
         self.dummy_runs = fib[1] - idx if idx else 0
         self.log('distribution_log', f'Output tape: {output_tape}')
         self.log('distribution_log', f'Amount of series on tapes: {tapes_series}')
@@ -44,7 +48,7 @@ class Sorter:
         return output_tape[::-1] if idx else output_tape  # Which tape yields dummy runs
 
     def coalescence_series(self, input_tape: int, output_tape: int, last_value_from_previous):
-        if len(self.buffer) and self.buffer[0] > last_value_from_previous:
+        if len(self.buffer) and last_value_from_previous and self.buffer[0] >= last_value_from_previous:
             self.log('distribution_log',
                      f'FOUND COALESCENTED SERIES! PREVIOUS VALUE '
                      f'{last_value_from_previous.__call__()}')
@@ -101,9 +105,6 @@ class Sorter:
     def print_buffer(self):
         return [x.__call__() if type(x) == FifthRecordType else x for x in self.buffer]
 
-    def print_fifth_type(self, list_of_val: list):
-        return [x.__call__() if type(x) == FifthRecordType else x for x in list_of_val]
-
     def merge_two_tapes(self):
         previous_values = [-1, -1]
         self.refill_buffer()
@@ -127,15 +128,15 @@ class Sorter:
                     runs[1] = True
             if runs[0]:
                 self.merge_serie(1, previous_values[1])
-                previous_values[1] = -1
+                previous_values = [-1, -1]
                 self.log('merge_log', f'end of run on tape {self.tapes_sequence[1]}\nactual value {self.buffer[1]}')
             elif runs[1]:
                 self.merge_serie(0, previous_values[0])
-                previous_values[0] = -1
+                previous_values = [-1, -1]
                 self.log('merge_log', f'end of run on tape {self.tapes_sequence[0]}\nactual value {self.buffer[0]}')
 
     def merge_serie(self, buffer_idx, last_value):
-        while self.buffer[buffer_idx] and last_value < self.buffer[buffer_idx]:
+        while self.buffer[buffer_idx] and last_value <= self.buffer[buffer_idx]:
             self.db.save_to_tape(self.tapes_sequence[2], self.buffer[buffer_idx])
             last_value = self.buffer[buffer_idx]
             self.buffer[buffer_idx] = self.db.read_from_tape(self.tapes_sequence[buffer_idx])
@@ -168,7 +169,7 @@ class Sorter:
 log = Logger()
 
 Helpers.erase_files(['tape0.txt', 'tape1.txt', 'tape2.txt'])
-Helpers.generate(100, 30, 'basic_test_fifth')
+# Helpers.generate(100, 30, 'basic_test_fifth')
 Helpers.copy_data('basic_test_fifth', 'tape0.txt')
 data = DatabaseAccessor('tape0.txt', 'tape1.txt', 'tape2.txt', log, 100)
 sort = Sorter(data, log)
