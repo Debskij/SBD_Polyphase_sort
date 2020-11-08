@@ -10,13 +10,17 @@ class DatabaseAccessor:
 
     def read_from_tape(self, tape_no: int):
         try:
-            record = self.tapes[tape_no].readline().strip('\n')
+            record = self.tapes[tape_no].readline()
+            if record == '\n':
+                self.tapes[tape_no].readline()
+            record = record.strip('\n')
             self.log('database_log', f'Read from tape {tape_no} value {record}')
             self.data_base_accesses[0] += 1
             self.delete_from_tape(tape_no)
+            self.log('database_log', f'Curently read record: {record}')
             return FifthRecordType(record)
         except (ValueError, IOError):
-            self.log('database_log', "ERROR WHILE READING")
+            self.log('database_log', f"ERROR WHILE READING ON TAPE {tape_no}")
             return None
 
     def flush_whole_db(self):
