@@ -49,15 +49,24 @@ class DatabaseAccessor:
         self.tapes[tape_no].seek(0)
 
     def save_to_tape(self, tape_no: int, value):
-        try:
-            self.tapes[tape_no].write(f'{str(value.__call__() if type(value) == FifthRecordType else value)}{self.separator}')
-            self.data_base_accesses[1] += 1
-            self.log('database_log',
-                     f'Written value: {str(value.__call__() if type(value) == FifthRecordType else value)} to tape {tape_no}')
-            return True
-        except(ValueError, IOError):
-            self.log('database_log', "ERROR WHILE SAVING")
-            return False
+        if value:
+            value = value.__call__() + self.separator
+            if len(self.tape_buffers[tape_no]) + len(value) < self.block_size:
+                self.tape_buffers[tape_no] += value
+            elif len(self.tape_buffers[tape_no]) + len(value) >= self.block_size:
+                free_space = self.block_size - len(self.tape_buffers[tape_no])
+                self.tape_buffers[tape_no] += value[:free_space]
+                while len(self.tape_buffers[tape_no]) == self.block_size:
+                    self.data_base_accesses[1] += 1
+                    self.tapes[tape_no].writelines(self.tape_buffers[tape_no])
+                    value = value[free_space:]
+                    free_space = self.block_size
+                    self.tape_buffers[tape_no] = value[:free_space]
+
+    def save_stuff_left_on_buffer(self, tape_no: int):
+        self.data_base_accesses[1] += 1
+        self.tapes[tape_no].writelines(self.tape_buffers[tape_no])
+        self.tape_buffers[tape_no] = ''
 
     def read_write_status(self):
         return f'read operations: {self.data_base_accesses[0]}, write operations: {self.data_base_accesses[1]}'

@@ -8,3 +8,4 @@ class Validator:
         with open(path, 'r+') as file:
             d = file.readlines()
             print(d == sorted(d))
+            return d == sorted(d)
