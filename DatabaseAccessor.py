@@ -70,3 +70,6 @@ class DatabaseAccessor:
 
     def read_write_status(self):
         return f'read operations: {self.data_base_accesses[0]}, write operations: {self.data_base_accesses[1]}'
+
+    def show_sum_of_reads_and_writes(self):
+        return sum(self.data_base_accesses)

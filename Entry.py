@@ -7,16 +7,20 @@ from Validator import Validator
 
 class Entry:
     def test_run_once(self, max_record_length: int, amount_of_records: int,
-                      file_to_generate: str, block_size: int):
+                      file_to_generate: str, block_size: int, amount_of_phases=-1,
+                      measure_rw_from_db=False):
         log = Logger()
         Helpers.erase_files(['tape0.txt', 'tape1.txt', 'tape2.txt'])
         Helpers.generate(amount_of_records, max_record_length, file_to_generate)
         Helpers.copy_data(file_to_generate, 'tape0.txt')
         data = DatabaseAccessor('tape0.txt', 'tape1.txt', 'tape2.txt', log, block_size)
-        sort = Sorter(data, log)
-        sort.entry_point()
+        sort = Sorter(database=data, log=log)
+        sort.entry_point(amount_of_phases)
         log.print_log()
-        return Validator.validate(['tape0.txt', 'tape1.txt', 'tape2.txt'])
+        if measure_rw_from_db:
+            return data.show_sum_of_reads_and_writes()
+        else:
+            return Validator.validate(['tape0.txt', 'tape1.txt', 'tape2.txt'])
 
     def test_run_multiple(self, max_record_length: int, amount_of_records: int,
                           file_to_generate: str, block_size: int,
