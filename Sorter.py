@@ -1,10 +1,10 @@
+import os
 from sys import maxsize
+from math import log2
 
 from DatabaseAccessor import DatabaseAccessor
 from Logger import Logger
-from Helpers import Helpers
 from FifthRecordType import FifthRecordType
-from Validator import Validator
 
 
 def print_fifth_type(list_of_val: list):
@@ -166,6 +166,7 @@ class Sorter:
             self.buffer[0], self.buffer[1] = self.buffer[1], self.buffer[0]
             self.print_tapes_after_phase(f'merge phase {phase_number}')
             self.log('merge_log', f'buffer tape {self.tapes_sequence[1]}: {self.print_buffer()[0]}')
+        return phase_number
 
     def entry_point(self):
         self.tapes_sequence = [*self.initial_distribution(), 0]
@@ -174,7 +175,20 @@ class Sorter:
         self.db.flush_whole_db()
         self.buffer = [None, None]
         self.log('merge_log', f'tapes sequence: {self.tapes_sequence}')
-        self.merge_phase()
+        phase_count = self.merge_phase()
+        self.nerd_log(phase_count)
+
+    def nerd_log(self, phase_count):
+        real_n = max(len([x for x in tape if x]) for tape in self.db.show_all_tapes())
+        file_size = max([os.path.getsize(path_name) for path_name in self.db.paths])
+        avg_record_size = file_size/real_n
+        blocking_factor = self.db.block_size/avg_record_size
+        self.log('nerd_log', f'theoretical number of phases: {1.45*log2(real_n/2)}')
+        self.log('nerd_log', f'actual number of phases: {phase_count}')
+        self.log('nerd_log', f'theoretical number of reads and writes: '
+                             f'{2 * real_n * (1.04 * log2(real_n) - 0.04) / blocking_factor}')
+        self.log('nerd_log', f'actual number of reads and writes: {self.db.show_sum_of_reads_and_writes()}')
+
 
     def refill_buffer(self):
         self.buffer = [self.db.read_from_tape(self.tapes_sequence[0]) if not self.buffer[0] else self.buffer[0],

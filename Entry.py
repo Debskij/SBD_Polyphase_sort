@@ -106,7 +106,7 @@ class TextInterface:
             'database_log': False,
             'distribution_log': False,
             'merge_log': False,
-            'phase_log': True,
+            'phase_log': False,
             'nerd_log': True
         }
         self.callboard = {
@@ -115,6 +115,7 @@ class TextInterface:
             '3': self.entry_class.test_run_once_with_kb_input,
             '4': self.entry_class.test_run_once_with_file_input,
             '5': self.modify_test_params,
+            '6': self.modify_logger_param
         }
         self.descriptions = [
             '1. run single random test with params',
@@ -129,7 +130,6 @@ class TextInterface:
 
     def replace_floors(self, value):
         return value.replace('_', ' ')
-
 
     def modify_test_params(self, **kwargs):
         for key, val in self.params.items():
@@ -154,16 +154,16 @@ class TextInterface:
                 try:
                     tested_value = input(f'{self.replace_floors(key)}:')
                     if type(val) == bool:
-                        self.params[key] = bool(int(tested_value))
+                        self.logger[key] = bool(int(tested_value))
                         break
                     raise ValueError
                 except ValueError:
                     print('Invalid type. Try again.')
         return True
 
-
     def runner(self):
         while True:
+            print('\n'.join([f'{self.replace_floors(key)}: {val}' for key, val in self.logger.items()]))
             print('\n'.join([f'{self.replace_floors(key)}: {val}' for key, val in self.params.items()]))
             operator = input('\n' + '\n'.join(self.descriptions))
             while not 1 <= int(operator) <= 7:
@@ -171,7 +171,7 @@ class TextInterface:
             if operator == '7':
                 break
             else:
-                print(self.callboard[str(operator)].__call__(**{**self.params, 'logger_config': self.logger}))
+                self.callboard[str(operator)].__call__(**{**self.params, 'logger_config': self.logger})
 
 
 t = TextInterface()
