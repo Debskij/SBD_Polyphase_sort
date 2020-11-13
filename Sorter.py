@@ -13,7 +13,7 @@ def print_fifth_type(list_of_val: list):
 
 class Sorter:
     def __init__(self, database: DatabaseAccessor, log: Logger):
-        self.buffer = list()
+        self.buffer = [None, None]
         self.db = database
         self.log = log
         self.dummy_runs = 0
@@ -143,28 +143,38 @@ class Sorter:
             self.buffer[buffer_idx] = self.db.read_from_tape(self.tapes_sequence[buffer_idx])
         return last_value
 
-    def merge_phase(self, amount_of_phases: int):
+    def print_tapes_after_phase(self, phase_name: str):
+        self.log('phase_log', f'tapes status after {phase_name}')
+        tapes_values = self.db.show_all_tapes()
+        for tape_idx in range(len(tapes_values)):
+            if self.buffer[1] and tape_idx == self.tapes_sequence[1]:
+                self.log('phase_log', f'tape {tape_idx}: {[self.buffer[1].__call__()] + tapes_values[tape_idx]}')
+            else:
+                self.log('phase_log', f'tape {tape_idx}: {tapes_values[tape_idx]}')
+
+    def merge_phase(self):
         self.merge_dummy_runs()
         self.refill_buffer()
-        while not all(v is None for v in self.buffer) and amount_of_phases:
-            amount_of_phases -= 1
+        phase_number = 0
+        while not all(v is None for v in self.buffer):
+            phase_number += 1
             self.merge_two_tapes()
             self.db.save_stuff_left_on_buffer(self.tapes_sequence[2])
             self.db.flush_whole_db()
             self.rotate_sequence()
             self.log('merge_log', f'tapes sequence: {self.tapes_sequence}')
             self.buffer[0], self.buffer[1] = self.buffer[1], self.buffer[0]
+            self.print_tapes_after_phase(f'merge phase {phase_number}')
             self.log('merge_log', f'buffer tape {self.tapes_sequence[1]}: {self.print_buffer()[0]}')
 
-    def entry_point(self, amount_of_phases=-1):
+    def entry_point(self):
         self.tapes_sequence = [*self.initial_distribution(), 0]
         self.db.save_stuff_left_on_buffer(self.tapes_sequence[0])
         self.db.save_stuff_left_on_buffer(self.tapes_sequence[1])
         self.db.flush_whole_db()
         self.buffer = [None, None]
         self.log('merge_log', f'tapes sequence: {self.tapes_sequence}')
-        if amount_of_phases != 0:
-            self.merge_phase(amount_of_phases)
+        self.merge_phase()
 
     def refill_buffer(self):
         self.buffer = [self.db.read_from_tape(self.tapes_sequence[0]) if not self.buffer[0] else self.buffer[0],

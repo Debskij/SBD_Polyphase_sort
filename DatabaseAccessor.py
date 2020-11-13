@@ -36,6 +36,11 @@ class DatabaseAccessor:
                 else:
                     return FifthRecordType(buffer_splitted[0])
 
+    def show_all_tapes(self):
+        tapes_val = [[record.rstrip('\n') for record in tape.readlines()] for tape in self.tapes]
+        self.flush_whole_db()
+        return tapes_val
+
     def flush_whole_db(self):
         for tape in self.tapes:
             tape.close()
