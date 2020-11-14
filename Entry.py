@@ -11,10 +11,10 @@ class Entry:
         Helpers.copy_data(input_file, 'tape0.txt')
         data = DatabaseAccessor('tape0.txt', 'tape1.txt', 'tape2.txt', log, block_size)
         sort = Sorter(database=data, log=log)
-        sort.entry_point()
+        phase_count = sort.entry_point()
         log.print_log()
         if measure_rw_from_db:
-            return data.show_sum_of_reads_and_writes()
+            return data.show_sum_of_reads_and_writes(), phase_count
         else:
             return Validator.validate(['tape0.txt', 'tape1.txt', 'tape2.txt'])
 
@@ -107,7 +107,7 @@ class TextInterface:
             'distribution_log': False,
             'merge_log': False,
             'phase_log': False,
-            'nerd_log': True
+            'nerd_log': False
         }
         self.callboard = {
             '1': self.entry_class.test_run_once,
@@ -166,8 +166,8 @@ class TextInterface:
             print('\n'.join([f'{self.replace_floors(key)}: {val}' for key, val in self.logger.items()]))
             print('\n'.join([f'{self.replace_floors(key)}: {val}' for key, val in self.params.items()]))
             operator = input('\n' + '\n'.join(self.descriptions))
-            while not 1 <= int(operator) <= 7:
-                operator = input('invalid option selected!\n' + '\n'.join(self.descriptions))
+            while not '1' <= operator <= '7':
+                operator = input('invalid option selected!\nOperation: \t')
             if operator == '7':
                 break
             else:

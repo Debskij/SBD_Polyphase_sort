@@ -18,13 +18,13 @@ class DatabaseAccessor:
             if not len(self.tape_buffers[tape_no]):
                 self.data_base_accesses[0] += 1
                 self.tape_buffers[tape_no] = self.tapes[tape_no].read(self.block_size)
-                self.delete_from_tape(tape_no)
+                # self.delete_from_tape(tape_no)
             buffer_splitted = self.tape_buffers[tape_no].split(self.separator)
             if len(buffer_splitted) == 1 and len(buffer_splitted[0]):
                 temp_record += buffer_splitted[0]
                 self.data_base_accesses[0] += 1
                 self.tape_buffers[tape_no] = self.tapes[tape_no].read(self.block_size)
-                self.delete_from_tape(tape_no)
+                # self.delete_from_tape(tape_no)
                 if not self.tape_buffers[tape_no]:
                     return FifthRecordType(temp_record)
             if len(buffer_splitted) == 1 and not len(buffer_splitted[0]):

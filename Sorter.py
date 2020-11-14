@@ -160,6 +160,8 @@ class Sorter:
             phase_number += 1
             self.merge_two_tapes()
             self.db.save_stuff_left_on_buffer(self.tapes_sequence[2])
+            self.db.delete_from_tape(self.tapes_sequence[0])
+            self.db.delete_from_tape(self.tapes_sequence[1])
             self.db.flush_whole_db()
             self.rotate_sequence()
             self.log('merge_log', f'tapes sequence: {self.tapes_sequence}')
@@ -170,6 +172,7 @@ class Sorter:
 
     def entry_point(self):
         self.tapes_sequence = [*self.initial_distribution(), 0]
+        self.db.delete_from_tape(0)
         self.db.save_stuff_left_on_buffer(self.tapes_sequence[0])
         self.db.save_stuff_left_on_buffer(self.tapes_sequence[1])
         self.db.flush_whole_db()
@@ -177,6 +180,7 @@ class Sorter:
         self.log('merge_log', f'tapes sequence: {self.tapes_sequence}')
         phase_count = self.merge_phase()
         self.nerd_log(phase_count)
+        return phase_count
 
     def nerd_log(self, phase_count):
         real_n = max(len([x for x in tape if x]) for tape in self.db.show_all_tapes())
